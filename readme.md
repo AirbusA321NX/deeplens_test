@@ -3,27 +3,88 @@
 This project implements a deep learning pipeline using **PyTorch** to identify gravitational lenses in astronomical images. It is specifically designed to handle a significant class imbalance between "Lens" and "Non-Lens" images.
 
 
-## System Architecture
+## System Architecture (In-Depth)
 
 ```mermaid
 graph TD
-    Data["npy Images 64x64x3"] --> Pre["dataset.py: Preprocessing"]
-    Pre --> Loader["PyTorch DataLoader"]
-    Loader --> Model["model.py: ResNet-18 Backbone"]
-    Model --> Out["Binary Classifier Output"]
-    Out --> Final["Final Prediction: Lens vs Non-Lens"]
-```
+    subgraph "Data Acquisition"
+        D1["Raw .npy Samples (64x64x3)"]
+    end
 
+    subgraph "Preprocessing Pipeline (dataset.py)"
+        P1["Normalization & Scaling"]
+        P2["Data Augmentation (Train Only)"]
+        P1 --> P2
+        D1 --> P1
+    end
+
+    subgraph "ResNet-18 Backbone (model.py)"
+        R1["Initial Conv (7x7) & MaxPool"]
+        R2["Residual Layer 1 (64 channels)"]
+        R3["Residual Layer 2 (128 channels)"]
+        R4["Residual Layer 3 (256 channels)"]
+        R5["Residual Layer 4 (512 channels)"]
+        R1 --> R2 --> R3 --> R4 --> R5
+    end
+
+    subgraph "Classification Head"
+        H1["Global Average Pool (GAP)"]
+        H2["Fully Connected (1 Unit)"]
+        H3["Sigmoid Activation (Logits)"]
+        R5 --> H1 --> H2 --> H3
+    end
+
+    P2 --> R1
+    H3 --> Out["Lens Presence Probability"]
+```
 
 ## Training Workflow (Anti-Imbalance Strategy)
 
 ```mermaid
 graph LR
-    DS["Imbalanced Dataset"] --> Sampler["WeightedRandomSampler"]
-    Sampler --> Batch["Balanced Training Batch"]
-    Batch --> Loss["BCEWithLogitsLoss with pos_weight"]
-    Loss --> Metric["Optimized Lens Detection"]
+    subgraph "Data Partitioning"
+        DS["Full Imbalanced Dataset"]
+        DS --> SS["Stratified Split (90/10)"]
+    end
+
+    subgraph "Training Phase"
+        TR["90% Training Set"]
+        WRS["WeightedRandomSampler"]
+        TR --> WRS
+        WRS --> B["Balanced Mini-Batches"]
+        B --> M1["ResNet Trainable Layers"]
+        M1 --> L["BCEWithLogitsLoss"]
+    end
+
+    subgraph "Validation Phase"
+        VAL["10% Validation Set"]
+        VAL --> EV["Metric Tracker"]
+        EV --> CP["Best Checkpoint Management"]
+    end
+
+    SS --> TR
+    SS --> VAL
+    L -.-> CP
 ```
+
+## Technical Implementation Details
+
+### Data Partitioning Strategy
+To ensure the model generalizes well across the unbalanced classes:
+- **Stratified Splitting**: We use `scikit-learn`'s `train_test_split` with `stratify=targets`. This ensures that the 10% validation set retains the exact same "Lens" vs "Non-Lens" ratio as the original imbalanced data.
+- **Dynamic Sampling**: During training, a **WeightedRandomSampler** is used to oversample the minority "Lens" class within each batch, forcing the model to learn the specific features of gravitational lenses rather than converging to a majority-class predictor.
+
+### Evaluation Metrics
+We track the following performance indicators to evaluate the pipeline's robustness:
+- **Accuracy**: General performance (often misleading for imbalanced data).
+- **Precision**: Capability to minimize False Positives (crucial in astronomy to avoid "ghost" detections).
+- **Recall / Sensitivity**: Ability to find all gravitational lenses.
+- **F1-Score**: The harmonic mean of Precision and Recall, used for final model selection.
+- **ROC-AUC**: Evaluates the model's discriminative power regardless of the threshold.
+
+> [!TIP]
+> **Threshold Optimization**: We do not use the default 0.5 threshold. The evaluation script automatically finds the threshold that maximizes the **F1-Score**, significantly improving detection performance on skewed datasets.
+
 
 ## Model Architecture Details (ResNet-18)
 The model uses a standard ResNet-18 backbone. For the **64x64** input size, the spatial progression is as follows:
