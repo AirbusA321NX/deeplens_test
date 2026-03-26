@@ -74,13 +74,20 @@ To ensure the model generalizes well across the unbalanced classes:
 - **Stratified Splitting**: We use `scikit-learn`'s `train_test_split` with `stratify=targets`. This ensures that the 10% validation set retains the exact same "Lens" vs "Non-Lens" ratio as the original imbalanced data.
 - **Dynamic Sampling**: During training, a **WeightedRandomSampler** is used to oversample the minority "Lens" class within each batch, forcing the model to learn the specific features of gravitational lenses rather than converging to a majority-class predictor.
 
-### Evaluation Metrics
-We track the following performance indicators to evaluate the pipeline's robustness:
-- **Accuracy**: General performance (often misleading for imbalanced data).
-- **Precision**: Capability to minimize False Positives (crucial in astronomy to avoid "ghost" detections).
-- **Recall / Sensitivity**: Ability to find all gravitational lenses.
-- **F1-Score**: The harmonic mean of Precision and Recall, used for final model selection.
-- **ROC-AUC**: Evaluates the model's discriminative power regardless of the threshold.
+### Achieved Performance Metrics (Test Set)
+On a highly imbalanced test set of **19,650 samples** (~100:1 ratio), the model achieved the following performance after threshold optimization:
+
+| Metric | Value |
+| :--- | :--- |
+| **Accuracy** | 99.22% |
+| **Precision (Lens)** | 0.61 |
+| **Recall (Lens)** | 0.61 |
+| **F1-Score** | 0.61 |
+| **ROC-AUC** | **0.9751** |
+
+> [!IMPORTANT]
+> **Performance Analysis**: While the F1-score of 0.61 reflects the difficulty of identifying only 195 lenses among 19,455 non-lenses, the **ROC-AUC of 0.975** indicates that the model has excellent discriminative power. The chosen threshold of **0.8728** was found to be the optimal point for balancing discovery rate and false positive mitigation.
+
 
 > [!TIP]
 > **Threshold Optimization**: We do not use the default 0.5 threshold. The evaluation script automatically finds the threshold that maximizes the **F1-Score**, significantly improving detection performance on skewed datasets.
