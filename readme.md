@@ -1,0 +1,81 @@
+# Gravitational Lens Identification Model
+
+This project implements a deep learning pipeline using **PyTorch** to identify gravitational lenses in astronomical images. It is specifically designed to handle a significant class imbalance between "Lens" and "Non-Lens" images.
+
+
+## System Architecture
+
+```mermaid
+graph TD
+    Data["npy Images 64x64x3"] --> Pre["dataset.py: Preprocessing"]
+    Pre --> Loader["PyTorch DataLoader"]
+    Loader --> Model["model.py: ResNet-18 Backbone"]
+    Model --> Out["Binary Classifier Output"]
+    Out --> Final["Final Prediction: Lens vs Non-Lens"]
+```
+
+
+## Training Workflow (Anti-Imbalance Strategy)
+
+```mermaid
+graph LR
+    DS["Imbalanced Dataset"] --> Sampler["WeightedRandomSampler"]
+    Sampler --> Batch["Balanced Training Batch"]
+    Batch --> Loss["BCEWithLogitsLoss with pos_weight"]
+    Loss --> Metric["Optimized Lens Detection"]
+```
+
+## Model Architecture Details (ResNet-18)
+The model uses a standard ResNet-18 backbone. For the **64x64** input size, the spatial progression is as follows:
+- **Input**: 64x64x3
+- **Initial Conv/Pool**: 16x16
+- **Residual Blocks**: Progressively downsamples to 8x8, 4x4, and finally 2x2.
+- **Global Average Pool**: 1x1
+- **Fully Connected**: Binary output (1 unit)
+
+---
+
+## Project Structure
+- `dataset.py`: Custom PyTorch `Dataset` for loading 64x64x3 `.npy` images. Includes basic data augmentation (flips).
+- `model.py`: **ResNet-18** architecture modified for binary classification.
+- `train.py`: Main training script with specialized sampling and weighted loss logic.
+- `evaluate.py`: Post-training evaluation script to calculate F1-score and ROC-AUC.
+- `training_log.csv`: Automatically generated during training to track progress.
+
+## Strategy for Class Imbalance
+To ensure the model doesn't just predict "Non-Lens" (the majority class), we use:
+1.  **WeightedRandomSampler**: Every training batch is forced to have a balanced representation of both classes.
+2.  **Weighted BCE Loss**: The loss function (`BCEWithLogitsLoss`) is configured with a `pos_weight` to penalize misclassifications of the minority "Lens" class more heavily.
+
+## Requirements
+- Python 3.10+
+- PyTorch with CUDA support (Recommended for **RTX 3050**)
+- NumPy, scikit-learn, matplotlib, seaborn
+
+## Usage
+
+### 1. Data Preparation
+Ensure the following directories are present in the project root:
+- `train_lenses/`
+- `train_nonlenses/`
+- `test_lenses/`
+- `test_nonlenses/`
+
+### 2. Training
+Run the training script to train the ResNet-18 model:
+```bash
+python train.py
+```
+This will log metrics to `training_log.csv` and save model checkpoints periodically.
+
+### 3. Evaluation
+After training, evaluate the best model on the test set:
+```bash
+python evaluate.py
+```
+This will display the classification report and save a `confusion_matrix.png` to disk.
+
+## Optimization Notes
+- **Hardware**: The project is optimized for an **RTX 3050 (4GB)**. 
+- **Input Shape**: The model expects `(3, 64, 64)` tensors derived from `.npy` files.
+- **Batch Size**: Default is set to **32** for VRAM safety. Modify in `train.py` if needed.

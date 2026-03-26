@@ -1,0 +1,21 @@
+# Datasets
+train_lenses/
+train_nonlenses/
+test_lenses/
+test_nonlenses/
+
+# Model Checkpoints
+*.pth
+
+# Python execution/caching
+__pycache__/
+*.pyc
+
+# Local results and metadata
+training_log.csv
+evaluation_results.png
+.DS_Store
+Thumbs.db
+__MACOSX/
+.vscode/
+.idea/
