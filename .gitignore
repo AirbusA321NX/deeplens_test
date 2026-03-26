@@ -19,3 +19,6 @@ Thumbs.db
 __MACOSX/
 .vscode/
 .idea/
+
+# Documentation
+Proposal.pdf
