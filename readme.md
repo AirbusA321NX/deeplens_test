@@ -141,6 +141,15 @@ Ensure the following directories are present in the project root:
 - `test_lenses/`
 - `test_nonlenses/`
 
+### Dataset Breakdown
+Total Samples: **50,055 images** (.npy format)
+
+| Split | Lens Samples | Non-Lens Samples | Total |
+| :--- | :--- | :--- | :--- |
+| **Training Set** | 1,730 | 28,675 | 30,405 |
+| **Test Set** | 195 | 19,455 | 19,650 |
+| **Total** | **1,925** | **48,130** | **50,055** |
+
 ### 2. Training
 Run the training script to train the ResNet-18 model:
 ```bash
