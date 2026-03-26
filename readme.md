@@ -85,6 +85,18 @@ On a highly imbalanced test set of **19,650 samples** (~100:1 ratio), the model 
 | **F1-Score** | 0.61 |
 | **ROC-AUC** | **0.9751** |
 
+#### Detailed Classification Report
+```text
+              precision    recall  f1-score   support
+
+    Non-Lens       1.00      1.00      1.00     19455
+        Lens       0.61      0.61      0.61       195
+
+    accuracy                           0.99     19650
+   macro avg       0.80      0.80      0.80     19650
+weighted avg       0.99      0.99      0.99     19650
+```
+
 > [!IMPORTANT]
 > **Performance Analysis**: While the F1-score of 0.61 reflects the difficulty of identifying only 195 lenses among 19,455 non-lenses, the **ROC-AUC of 0.975** indicates that the model has excellent discriminative power. The chosen threshold of **0.8728** was found to be the optimal point for balancing discovery rate and false positive mitigation.
 
